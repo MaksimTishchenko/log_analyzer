@@ -30,8 +30,6 @@ def test_main_with_log_file(tmpdir, monkeypatch):
 
     # Проверяем, что отчет был создан в tmpdir
     report_files = [
-        path
-        for path in tmpdir.listdir()
-        if path.basename.startswith("report-")
+        path for path in tmpdir.listdir() if path.basename.startswith("report-")
     ]
     assert len(report_files) > 0, "No report files were generated"

@@ -19,8 +19,7 @@ def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
     config_file = Path(config_path)
     if not config_file.exists():
         print(
-            f"Warning: Config file not found: {config_path}. "
-            f"Using default config."
+            f"Warning: Config file not found: {config_path}. " f"Using default config."
         )
         return config
 
