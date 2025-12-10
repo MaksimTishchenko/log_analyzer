@@ -1,96 +1,67 @@
-import json
+import gzip
 import os
-from pathlib import Path
-from statistics import median
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+import re
+from collections import namedtuple
+from datetime import datetime
+from typing import Generator, Optional, Tuple
+
+import structlog
 
 
-def collect_statistics(
-    parsed_logs: Iterable[Tuple[Optional[str], Optional[float]]],
-) -> Tuple[Dict[str, Dict[str, Any]], int, float, int]:
-    """Aggregate statistics for each URL."""
-    stats: Dict[str, List[float]] = {}
-    parsing_errors = 0
+LogFile = namedtuple("LogFile", ["path", "date", "extension"])
 
-    for url, request_time in parsed_logs:
-        if url is None or request_time is None:
-            parsing_errors += 1
+
+def find_latest_log(log_dir: str) -> LogFile:
+    """Find the latest log file in the given directory."""
+    if not os.path.exists(log_dir):
+        raise FileNotFoundError(f"Log directory '{log_dir}' does not exist.")
+
+    latest_log = None
+    log_pattern = re.compile(r"nginx-access-ui\.log-(\d{8})(?:\.gz)?$")
+
+    for file_name in os.listdir(log_dir):
+        match = log_pattern.match(file_name)
+        if not match:
             continue
 
-        stats.setdefault(url, []).append(request_time)
+        log_date_str = match.group(1)
+        log_date = datetime.strptime(log_date_str, "%Y%m%d")
+        log_path = os.path.join(log_dir, file_name)
+        extension = "gz" if file_name.endswith(".gz") else ""
 
-    total_count = sum(len(times) for times in stats.values())
-    total_time = sum(sum(times) for times in stats.values())
+        if latest_log is None or log_date > latest_log.date:
+            latest_log = LogFile(path=log_path, date=log_date, extension=extension)
 
-    result: Dict[str, Dict[str, Any]] = {}
+    if latest_log is None:
+        raise FileNotFoundError("No valid log files found in the directory.")
 
-    for url, times in stats.items():
-        count = len(times)
-        time_sum = sum(times)
-        time_max = max(times)
-        time_avg = time_sum / count if count else 0
-        time_med = median(times)
-
-        count_perc = (count / total_count * 100) if total_count else 0
-        time_perc = (time_sum / total_time * 100) if total_time else 0
-
-        result[url] = {
-            "url": url,
-            "count": count,
-            "count_perc": count_perc,
-            "time_sum": time_sum,
-            "time_perc": time_perc,
-            "time_avg": time_avg,
-            "time_max": time_max,
-            "time_med": time_med,
-        }
-
-    return result, total_count, total_time, parsing_errors
+    return latest_log
 
 
-def is_report_exists(report_dir: os.PathLike[str], report_date: str) -> bool:
-    """Check if report for given date already exists."""
-    report_dir_path = Path(report_dir)
-    report_path = report_dir_path / f"report-{report_date}.html"
+def parse_log(
+    log_file: LogFile,
+) -> Generator[Tuple[Optional[str], Optional[float]], None, None]:
+    log_pattern = re.compile(
+        r'"(?:(?P<method>GET|POST|PUT|DELETE)\s+'
+        r'(?P<url>\S+)\s+HTTP/\d\.\d|0)"'
+        r".*?(?P<request_time>\d+\.\d+)$"
+    )
 
-    return report_path.exists()
+    opener = gzip.open if log_file.extension == "gz" else open
 
+    with opener(log_file.path, "rt", encoding="utf-8") as file:
+        for line in file:
+            match = log_pattern.search(line)
 
-def _render_report(table: List[Dict[str, Any]]) -> str:
-    """Render HTML report using template if available."""
-    template_path = Path("templates") / "report.html"
-    table_json = json.dumps(table)
+            if match:
+                url = match.group("url")
+                request_time = float(match.group("request_time"))
+                yield url, request_time
+                continue
 
-    if template_path.exists():
-        template = template_path.read_text(encoding="utf-8")
-        return template.replace("$table_json", table_json)
-
-    return f"""<html>
-<head><title>Log report</title></head>
-<body>
-<script>
-var table = {table_json};
-</script>
-</body>
-</html>"""
-
-
-def generate_report(
-    stats: Dict[str, Dict[str, Any]],
-    report_date: str,
-    report_dir: os.PathLike[str],
-    report_size: int,
-) -> None:
-    """Generate HTML report file."""
-    report_dir_path = Path(report_dir)
-    report_dir_path.mkdir(parents=True, exist_ok=True)
-
-    table = sorted(
-        stats.values(),
-        key=lambda item: item["time_sum"],
-        reverse=True,
-    )[:report_size]
-
-    report_html = _render_report(table)
-    report_path = report_dir_path / f"report-{report_date}.html"
-    report_path.write_text(report_html, encoding="utf-8")
+            logger = structlog.get_logger()
+            logger.error(
+                "Failed to parse log line",
+                line=line,
+            )
+            yield None, None
