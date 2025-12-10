@@ -62,4 +62,3 @@ def parse_log(
                 line=line,
             )
             yield None, None
-

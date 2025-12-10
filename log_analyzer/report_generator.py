@@ -92,4 +92,3 @@ def generate_report(
     report_html = _render_report(table)
     report_path = report_dir_path / f"report-{report_date}.html"
     report_path.write_text(report_html, encoding="utf-8")
-
