@@ -7,7 +7,6 @@ from typing import Generator, Optional, Tuple
 
 import structlog
 
-
 LogFile = namedtuple("LogFile", ["path", "date", "extension"])
 
 
