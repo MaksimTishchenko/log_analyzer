@@ -4,9 +4,12 @@ import re
 from collections import namedtuple
 from datetime import datetime
 from typing import Generator, Optional, Tuple
+
 import structlog
 
+
 LogFile = namedtuple("LogFile", ["path", "date", "extension"])
+
 
 def find_latest_log(log_dir: str) -> LogFile:
     """Find the latest log file in the given directory."""
@@ -31,7 +34,9 @@ def find_latest_log(log_dir: str) -> LogFile:
 
     if latest_log is None:
         raise FileNotFoundError("No valid log files found in the directory.")
+
     return latest_log
+
 
 def parse_log(
     log_file: LogFile,
@@ -41,10 +46,13 @@ def parse_log(
         r'(?P<url>\S+)\s+HTTP/\d\.\d|0)"'
         r".*?(?P<request_time>\d+\.\d+)$"
     )
+
     opener = gzip.open if log_file.extension == "gz" else open
+
     with opener(log_file.path, "rt", encoding="utf-8") as file:
         for line in file:
             match = log_pattern.search(line)
+
             if match:
                 url = match.group("url")
                 request_time = float(match.group("request_time"))

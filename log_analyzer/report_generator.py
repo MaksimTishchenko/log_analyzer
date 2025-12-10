@@ -4,6 +4,7 @@ from pathlib import Path
 from statistics import median
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+
 def collect_statistics(
     parsed_logs: Iterable[Tuple[Optional[str], Optional[float]]],
 ) -> Tuple[Dict[str, Dict[str, Any]], int, float, int]:
@@ -22,6 +23,7 @@ def collect_statistics(
     total_time = sum(sum(times) for times in stats.values())
 
     result: Dict[str, Dict[str, Any]] = {}
+
     for url, times in stats.items():
         count = len(times)
         time_sum = sum(times)
@@ -45,11 +47,14 @@ def collect_statistics(
 
     return result, total_count, total_time, parsing_errors
 
+
 def is_report_exists(report_dir: os.PathLike[str], report_date: str) -> bool:
     """Check if report for given date already exists."""
     report_dir_path = Path(report_dir)
     report_path = report_dir_path / f"report-{report_date}.html"
+
     return report_path.exists()
+
 
 def _render_report(table: List[Dict[str, Any]]) -> str:
     """Render HTML report using template if available."""
@@ -68,6 +73,7 @@ var table = {table_json};
 </script>
 </body>
 </html>"""
+
 
 def generate_report(
     stats: Dict[str, Dict[str, Any]],
