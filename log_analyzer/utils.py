@@ -1,30 +1,29 @@
 import logging
-import sys
-from pathlib import Path
+from logging import Logger
+from typing import List, Optional
 
 
-def setup_logging(log_file=None, level=logging.INFO):
-    """
-    Настройка системы логирования.
-    :param log_file: Путь к файлу логов (если None, логи выводятся в stdout).
-    :param level: Уровень логирования.
-    """
-    handlers = []
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+def setup_logging(level: int = logging.INFO, log_file: Optional[str] = None) -> Logger:
+    """Configure root logger with console and optional file handler."""
+    logger = logging.getLogger()
+    logger.setLevel(level)
 
-    # Логирование в консоль
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(formatter)
-    handlers.append(console_handler)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(levelname)s - %(message)s",
+    )
 
-    # Логирование в файл (если указан)
-    if log_file:
-        log_file = Path(log_file)
-        log_file.parent.mkdir(
-            parents=True, exist_ok=True
-        )  # Создаем директорию, если её нет
-        file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    handlers: List[logging.Handler] = []
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+    handlers.append(stream_handler)
+
+    if log_file is not None:
+        file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(formatter)
         handlers.append(file_handler)
 
-    logging.basicConfig(level=level, handlers=handlers)
+    for handler in handlers:
+        logger.addHandler(handler)
+
+    return logger
