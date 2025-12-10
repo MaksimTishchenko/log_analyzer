@@ -3,7 +3,7 @@ import os
 import re
 from collections import namedtuple
 from datetime import datetime
-from typing import Generator, Tuple
+from typing import Generator, Optional, Tuple
 
 import structlog
 
@@ -37,7 +37,9 @@ def find_latest_log(log_dir: str) -> LogFile:
     return latest_log
 
 
-def parse_log(log_file: LogFile) -> Generator[Tuple[str, float], None, None]:
+def parse_log(
+    log_file: LogFile,
+) -> Generator[Tuple[Optional[str], Optional[float]], None, None]:
     log_pattern = re.compile(
         r'"(?:(?P<method>GET|POST|PUT|DELETE)\s+'
         r'(?P<url>\S+)\s+HTTP/\d\.\d|0)"'
@@ -60,3 +62,4 @@ def parse_log(log_file: LogFile) -> Generator[Tuple[str, float], None, None]:
                 line=line,
             )
             yield None, None
+
