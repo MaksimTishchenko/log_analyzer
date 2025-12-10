@@ -1,0 +1,6 @@
+{
+  "LOG_DIR": "./logs",
+  "REPORT_DIR": "./reports",
+  "REPORT_SIZE": 1000,
+  "PARSING_ERROR_THRESHOLD": 0.5
+}
