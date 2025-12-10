@@ -1,14 +1,15 @@
 import json
 from pathlib import Path
+from typing import Any, Dict, Optional
 
-DEFAULT_CONFIG = {
+DEFAULT_CONFIG: Dict[str, Any] = {
     "REPORT_SIZE": 1000,
     "REPORT_DIR": "./reports",
     "LOG_DIR": "./logs",
 }
 
 
-def load_config(config_path: str | None = None) -> dict:
+def load_config(config_path: Optional[str] = None) -> Dict[str, Any]:
     """Load config from file and merge it with default config."""
     config = DEFAULT_CONFIG.copy()
 

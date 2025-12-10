@@ -2,11 +2,11 @@ import json
 import os
 from pathlib import Path
 from statistics import median
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 
 def collect_statistics(
-    parsed_logs: Iterable[Tuple[str | None, float | None]]
+    parsed_logs: Iterable[Tuple[Optional[str], Optional[float]]]
 ) -> Tuple[Dict[str, dict], int, float, int]:
     """Aggregate statistics for each URL."""
     stats: Dict[str, List[float]] = {}
@@ -47,7 +47,10 @@ def collect_statistics(
     return result, total_count, total_time, parsing_errors
 
 
-def is_report_exists(report_dir: str | os.PathLike, report_date: str) -> bool:
+def is_report_exists(
+    report_dir: os.PathLike,
+    report_date: str,
+) -> bool:
     """Check if report for given date already exists."""
     report_dir_path = Path(report_dir)
     report_path = report_dir_path / f"report-{report_date}.html"
@@ -76,7 +79,7 @@ var table = {table_json};
 def generate_report(
     stats: Dict[str, dict],
     report_date: str,
-    report_dir: str | os.PathLike,
+    report_dir: os.PathLike,
     report_size: int,
 ) -> None:
     """Generate HTML report file."""
