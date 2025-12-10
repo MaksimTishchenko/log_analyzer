@@ -1,10 +1,8 @@
 import json
 import os
-
 from pathlib import Path
 from statistics import median
 from typing import Any, Dict, Iterable, List, Optional, Tuple
-
 
 def collect_statistics(
     parsed_logs: Iterable[Tuple[Optional[str], Optional[float]]],
@@ -46,8 +44,6 @@ def collect_statistics(
         }
 
     return result, total_count, total_time, parsing_errors
-
-
 
 def is_report_exists(report_dir: os.PathLike[str], report_date: str) -> bool:
     """Check if report for given date already exists."""
